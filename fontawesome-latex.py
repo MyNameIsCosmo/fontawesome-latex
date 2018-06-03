@@ -404,21 +404,6 @@ def genTemplate(template, **kwargs):
     return template.render(**kwargs)
 
 
-def styTemplate(icons, package):
-    ''' Generate a sty template from a list of icons '''
-    return genTemplate('fontawesome.sty', package=package, icons=icons)
-
-
-def texTemplate(icons, package, fonts_dir):
-    ''' Generate a tex template from a list of icons '''
-    return genTemplate(
-        'fontawesome.tex',
-        package=package,
-        icons=icons,
-        fonts_dir=fonts_dir
-    )
-
-
 def saveFile(data, filename, output_dir='', overwrite=False):
     ''' Save data to output_dir/filename '''
     filename = os.path.join(output_dir, filename)
@@ -517,7 +502,7 @@ def main(version, download_dir, output_dir, fonts_dir,
 
     # Process Fonts
 
-    fonts_dir = os.path.join(output_dir, fonts_dir)
+    fonts_out_dir = os.path.join(output_dir, fonts_dir)
 
     font_dirs = [
         os.path.join(download_dir, d) for d in dirs if font_dir in d
@@ -525,7 +510,7 @@ def main(version, download_dir, output_dir, fonts_dir,
     logger.debug('font_dirs: '.format(font_dirs))
 
     if len(font_dirs) == 1:
-        copyFonts(font_dirs[0], fonts_dir)
+        copyFonts(font_dirs[0], fonts_out_dir)
     else:
         logger.error(
             'Cannot find the fonts dir in the Font Awesome zip! '
@@ -555,12 +540,24 @@ def main(version, download_dir, output_dir, fonts_dir,
     readme_path = os.path.join(download_dir, zip_dir, 'README.md')
     fa_version = getVersion(readme_path)
 
+    fonts_dir = fonts_dir + '/' if fonts_dir[-1] != '/' else fonts_dir
+
     for name, package in queue:
         package['desc'] = package['desc'].format(date=d, version=fa_version)
         icons = genIcons(data, name)
         templates = {
-            'sty': styTemplate(icons, package),
-            'tex': texTemplate(icons, package, fonts_dir)
+            'sty': genTemplate(
+                'fontawesome.sty',
+                icons=icons,
+                package=package,
+                fonts_dir=fonts_dir
+            ),
+            'tex': genTemplate(
+                'fontawesome.tex',
+                icons=icons,
+                package=package,
+                fonts_dir=fonts_dir
+            )
         }
         for extension, template in templates.items():
             output_file = '{}.{}'.format(package['name'], extension)
