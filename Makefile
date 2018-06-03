@@ -1,5 +1,5 @@
 all: run
-.PHONY: all
+.PHONY: all run debug pdf display clean release env
 
 run:
 	python3 fontawesome-latex.py
@@ -27,11 +27,19 @@ env venv:
 	echo "Type:"
 	echo "    source .env/bin/activate"
 
+release:
+	-rm release.zip
+	-rm -rf output/*.aux
+	-rm -rf output/*.log
+	cd release && \
+	zip ../release.zip README.md
+	cd output && \
+	zip ../release.zip ./* ./fonts/*
 
 clean:
-	rm -rf tmp
-	rm -rf output
-	rm texput.log
+	-rm -rf tmp
+	-rm -rf output
+	-rm texput.log
 
 clean-env:
 	rm -rf .env
