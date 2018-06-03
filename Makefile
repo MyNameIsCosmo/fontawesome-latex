@@ -18,3 +18,4 @@ xdg-open:
 clean:
 	rm -rf tmp
 	rm -rf output
+	rm texput.log
