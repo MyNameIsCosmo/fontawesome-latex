@@ -1,0 +1,32 @@
+% This file was generated using the fontawesome-latex generator
+% https://www.github.com/MyNameIsCosmo/fontawesome-latex
+
+% This file uses Jinja2 formatting with a modified environment.
+% The modified environment is inspired by http://eosrei.net/articles/2015/11/latex-templates-python-and-jinja2-generate-pdfs
+
+% This file is inspired by xdanaux/fontawesome-latex
+
+% ---------------------------------
+
+% Identification
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{\VAR{ package.name }}[\VAR{ package.desc }]
+
+% Requirements
+\usepackage{fontspec}
+
+\newcommand*{\fontdir}[1][\VAR{ fonts_dir }]{\def\@fontdir{#1}}
+\fontdir
+
+% Define a load shortcut
+\newfontfamily\\VAR{ package.short.upper() }[Path=\@fontdir]{\VAR{ package.font }}
+
+% Generic command displaying an icon by its name
+\newcommand*{\\VAR{ package.cmd }}[1]{{
+  \\VAR{ package.short.upper() }\csname \VAR{ package.cmd }@#1\endcsname
+}}
+
+\BLOCK{ for icon in icons }
+\expandafter\def\csname \VAR{ package.cmd }@\VAR{ icon.name }\endcsname {\symbol{"\VAR{ icon.unicode }}} \def\\VAR{ package.short }\VAR{ icon.label } {{\\VAR{ package.short.upper() }\csname \VAR{ package.cmd }@\VAR{ icon.name }\endcsname}}
+\BLOCK{ endfor }
+\endinput
