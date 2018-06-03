@@ -15,8 +15,10 @@
 % Requirements
 \usepackage{fontspec}
 
+\@ifundefined{fontdir}{%
 \newcommand*{\fontdir}[1][\VAR{ fonts_dir }]{\def\@fontdir{#1}}
 \fontdir
+}{}
 
 % Define a load shortcut
 \newfontfamily\\VAR{ package.short.upper() }[Path=\@fontdir]{\VAR{ package.font }}
