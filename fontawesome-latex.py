@@ -268,7 +268,7 @@ def unzip(filename, target=''):
     with zipfile.ZipFile(filename, 'r') as z, \
             tqdm(desc=desc) as t:
         files = z.infolist()
-        total = len(files)
+        total = len(files) - 1
         t.total = total
         for count, f in enumerate(files):
             z.extract(f, target)

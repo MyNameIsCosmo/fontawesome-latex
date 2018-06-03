@@ -3,3 +3,4 @@ click>=6.7
 tqdm>=4.23
 ruamel.yaml<0.15
 jinja2>=2.10
+pyyaml>=3.12
