@@ -1,3 +1,7 @@
+<p align="center">
+<img src="examples/example.png" />
+</p>
+
 # Fontawesome 5 LaTeX Generator
 
 This repo houses the ability to map FontAwesome font variants to a respective TeX binding.  
