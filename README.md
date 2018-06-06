@@ -37,6 +37,7 @@ Check out the [**examples**](examples) directory for a pre-built PDF, .sty, and 
 If you have *Font Awesome 5 Pro*, all you need to do is copy the fonts from `FontAwesome-Pro-x.x.x/use-on-destop` to the `fonts/` directory
 extracted from the zip archive, and specify the `[pro]` flag when loading the FontAwesome icons, like so: `\RequirePackage[pro]{fontawesome}`
 
+
 ## Nomenclature
 
 These mappings try to follow [Font Awesome's Prefixes](https://fontawesome.com/how-to-use/upgrading-from-4#icon-name-changes)  
@@ -67,15 +68,22 @@ make display
 make release
 ```
 
-### Building with a local zip archive
+### Advanced Usage
 
-Do you want to automatically build the mappings with FontAwesome Pro, or just use a local zip file?  
+The script will automagically detect if you're using FontAwesome *Free* or *Pro*, and build the templates accordingly.
 
-```console
-python3 fontawesome-latex --zipped-dir=path/to/your/font-awesome.zip
-```
-
-Thats it! The script will automagically detect if you're using FontAwesome *Free* or *Pro*, and build the templates accordingly.
+- Using a local zip archive:
+    ```console
+    python3 fontawesome-latex.py --local-file tmp/fontawesome-pro-5.0.13.zip
+    ```
+- Using a local extracted zip folder:
+    ```console
+    python3 fontawesome-latex.py --zipped-dir tmp/fontawesome-pro-5.0.13
+    ```
+- For more usage details, check out:
+    ```console
+    python3 fontawesome-latex.py --help
+    ```
 
 ## Why?
 
