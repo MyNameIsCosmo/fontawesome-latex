@@ -1,5 +1,5 @@
 <p align="center">
-<img src="examples/example.png" />
+<a href="examples/fontawesome.pdf"><img src="examples/example.png" /></a>
 </p>
 
 # Fontawesome 5 LaTeX Generator
