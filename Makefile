@@ -1,5 +1,5 @@
 all: run
-.PHONY: all run debug pdf display clean release env
+.PHONY: all run debug pdf display clean release env build
 
 run:
 	python3 fontawesome-latex.py
@@ -7,7 +7,7 @@ run:
 debug:
 	python3 fontawesome-latex.py --debug
 
-xelatex pdf:
+xelatex pdf build:
 	cd output && \
 	xelatex fontawesome.tex
 
