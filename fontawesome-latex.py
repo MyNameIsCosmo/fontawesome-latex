@@ -97,6 +97,11 @@ replace = [
         '1/2': 'Half',
         '1/4': 'Quarter',
         '3/4': 'ThreeQuarters',
+        '(Hand)': 'Hand',
+        '(JS)': 'JS',
+        '(Old)': 'Old',
+        '(Left-Weighted)': 'Left',
+        '(Right-Weighted)': 'Right'
     },
     {
         '-': ' ',
@@ -115,9 +120,6 @@ replace = [
         '8': 'Eight',
         '9': 'Nine',
         '&': 'And',
-        '(Hand)': 'Hand',
-        '(JS)': 'JS',
-        '(Old)': 'Old'
     }
 ]
 
@@ -609,7 +611,7 @@ def main(version, download_dir, output_dir, fonts_dir,
     package['desc'] = package['desc'].format(
         date=d,
         version=fa_version,
-        fa_type=fa_type.upper()
+        fa_type=fa_type.capitalize()
     )
 
     icons = genIcons(data, package, fa_type)
