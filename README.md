@@ -9,7 +9,7 @@ This was built to run on a Linux-based OS. Feel free to submit a PR for Windows 
 
 This ONLY supports FontAwesome releases 5.0 and up.
 
-Now supporting FontAwesome 5 Pro!
+Now supporting FontAwesome 5 Pro!*
 
 ## Current bindings:
 
@@ -34,8 +34,9 @@ Check out the [**examples**](examples) directory for a pre-built PDF, .sty, and 
 
 ### Pro
 
-If you have *Font Awesome 5 Pro*, all you need to do is copy the fonts from `FontAwesome-Pro-x.x.x/use-on-destop` to the `fonts/` directory
-extracted from the zip archive, and specify the `[pro]` flag when loading the FontAwesome icons, like so: `\RequirePackage[pro]{fontawesome}`
+Currently for Pro, you will need to run this script to generate Pro mappings until [#11](https://github.com/MyNameIsCosmo/fontawesome-latex/issues/11) is fixed.
+
+See [Advanced Usage](#advanced-usage) below.
 
 
 ## Nomenclature
@@ -44,9 +45,8 @@ These mappings try to follow [Font Awesome's Prefixes](https://fontawesome.com/h
 You can use icons in the generated mappings with the following calls:
 ```
 \faThumbsUp % generates a regular Thumbs Up
-\farThumbsUp % generates a regular Thumbs Up
-\fasThumbsUp % generates a solid Thumbs Up
-\falThumbsUp % generates a light Thumbs Up (pro)
+\faThumbsUpSolid % generates a solid Thumbs Up
+\faThumbsUpLight % generates a light Thumbs Up (pro)
 \textbf\faThumbsUp % generates a solid Thumbs Up
 \textit\faThumbsUp % generates a light Thumbs Up (pro)
 ```
