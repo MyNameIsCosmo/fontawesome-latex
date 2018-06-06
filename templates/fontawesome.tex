@@ -3,25 +3,29 @@
 \NeedsTeXFormat{LaTeX2e}
 \documentclass{article}
 
-\RequirePackage{multicol}
 \RequirePackage{geometry}
 \RequirePackage[quiet]{fontspec}
 \RequirePackage[\VAR{ fa_type }]{\VAR{ package.file }}
-\usepackage{mathtools}
-\usepackage{wasysym}
 
 \geometry{left=.8cm, top=.8cm, right=.8cm, bottom=.8cm}
 
 % The following does not need to be included in your .tex or .cls:
+
+\RequirePackage{multicol}
+\RequirePackage{mathtools}
+\RequirePackage{wasysym}
+
 \begin{document}
 \section{\VAR{ package.desc }}
+% To include unicode with the FA typeset, you need to use the \text{} command
 \[
 \text{\frownie} \xleftarrow{\text{Go from generic frownies}} \text{\\VAR{ package.short }Meh} 
   \xrightarrow[\text{to Font Awesome Smilies!}]{ } \text{\\VAR{ package.short }Smile}
 \]
 \begin{equation}
 \text{\\VAR{ package.short }Gem}={\text{\\VAR{ package.short }LizardHand}}{\sqrt{\text{\\VAR{ package.short }Flag} - \frac{\text{\\VAR{ package.short }Comment}}{\text{\\VAR{ package.short }EyeSlash}}}}
-\label{\\VAR{ package.short }ThumbsUp}
+% for tags, you need to go into math mode and then render the unicode text
+\tag{$\text{\\VAR{ package.short }ThumbsUp}$}
 \end{equation}
 \section{Icons}
 \begin{multicols}{2}
