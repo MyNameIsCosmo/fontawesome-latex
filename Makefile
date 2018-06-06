@@ -9,14 +9,10 @@ debug:
 
 xelatex pdf:
 	cd output && \
-	xelatex fontawesomefree.tex && \
-	xelatex fontawesomefreesolid.tex && \
-	xelatex fontawesomebrandsregular.tex
+	xelatex fontawesome.tex
 
 xdg-open display:
-	xdg-open output/fontawesomefree.pdf && \
-	xdg-open output/fontawesomefreesolid.pdf && \
-	xdg-open output/fontawesomebrandsregular.pdf
+	xdg-open output/fontawesome.pdf
 
 env venv:
 	virtualenv --python=python3 --always-copy .env && \

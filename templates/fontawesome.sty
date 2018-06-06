@@ -5,23 +5,53 @@
 % The modified environment is inspired by http://eosrei.net/articles/2015/11/latex-templates-python-and-jinja2-generate-pdfs
 
 % This file is inspired by xdanaux/fontawesome-latex
+% This file is inspired by JanHendrikDolling/latex-fontawesome5
 
 % ---------------------------------
 
 % Identification
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{\VAR{ package.name }}[\VAR{ package.desc }]
+\ProvidesPackage{\VAR{ package.file }}[\VAR{ package.desc }]
+
+\newif\iffontawesome@pro
+\fontawesome@profalse
+
+% Define pro option
+\DeclareOption{pro}{
+    \fontawesome@protrue
+}
+\DeclareOption{free}{
+    \fontawesome@profalse
+}
+
+\ProcessOptions\relax
 
 % Requirements
-\usepackage{fontspec}
+\RequirePackage{fontspec}
 
 \@ifundefined{fontdir}{%
 \newcommand*{\fontdir}[1][\VAR{ fonts_dir }]{\def\@fontdir{#1}}
 \fontdir
 }{}
 
-% Define a load shortcut
-\newfontfamily\\VAR{ package.short.upper() }[Path=\@fontdir]{\VAR{ package.font }}
+% Define shortcut to load the Font Awesome font for brands
+\newfontfamily{\\VAR{ package.short.upper() }\VAR{ package.brands.prepend }}[Path=\@fontdir]{\VAR{ package.brands.font }}
+
+% Define shortcut to load the Font Awesome Free font
+\iffontawesome@pro
+    \newfontfamily\FA[
+        Path=\@fontdir,
+        UprightFont=*-Regular-400,
+        ItalicFont=*-Light-300,
+        BoldFont=*-Solid-900
+    ]{Font Awesome 5 Pro}
+\else
+    \newfontfamily\FA[
+        Path=\@fontdir,
+        UprightFont=*-Regular-400,
+        BoldFont=*-Solid-900
+    ]{Font Awesome 5 Free}
+\fi
 
 % Generic command displaying an icon by its name
 \newcommand*{\\VAR{ package.cmd }}[1]{{
@@ -29,6 +59,6 @@
 }}
 
 \BLOCK{ for icon in icons }
-\expandafter\def\csname \VAR{ package.cmd }@\VAR{ icon.name }\endcsname {\symbol{"\VAR{ icon.unicode }}} \def\\VAR{ package.short }\VAR{ icon.label } {{\\VAR{ package.short.upper() }\csname \VAR{ package.cmd }@\VAR{ icon.name }\endcsname}}
+\expandafter\def\csname \VAR{ package.cmd }@\VAR{ icon.prepend }\VAR{ icon.name }\VAR{ icon.append }\endcsname {\symbol{"\VAR{ icon.unicode }}} \def\\VAR{ package.short }\VAR{ icon.prepend }\VAR{ icon.label }\VAR{ icon.append } {\VAR{ icon.modifier }{\\VAR{ package.short.upper() }\VAR{ icon.prepend }\csname \VAR{ package.cmd }@\VAR{ icon.prepend }\VAR{ icon.name }\VAR{ icon.append }\endcsname}}
 \BLOCK{ endfor }
 \endinput

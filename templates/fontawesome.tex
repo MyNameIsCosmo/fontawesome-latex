@@ -6,20 +6,28 @@
 \RequirePackage{multicol}
 \RequirePackage{geometry}
 \RequirePackage[quiet]{fontspec}
-\RequirePackage{\VAR{ package.name }}
+\RequirePackage[\VAR{ fa_type }]{\VAR{ package.file }}
+\usepackage{mathtools}
+\usepackage{wasysym}
 
-\geometry{left=1.4cm, top=.8cm, right=1.4cm, bottom=.8cm}
+\geometry{left=.8cm, top=.8cm, right=.8cm, bottom=.8cm}
 
 % The following does not need to be included in your .tex or .cls:
-
-
 \begin{document}
 \section{\VAR{ package.desc }}
+\[
+\text{\frownie} \xleftarrow{\text{Go from generic frownies}} \text{\\VAR{ package.short }Meh} 
+  \xrightarrow[\text{to Font Awesome Smilies!}]{ } \text{\\VAR{ package.short }Smile}
+\]
+\begin{equation}
+\text{\\VAR{ package.short }Gem}={\text{\\VAR{ package.short }LizardHand}}{\sqrt{\text{\\VAR{ package.short }Flag} - \frac{\text{\\VAR{ package.short }Comment}}{\text{\\VAR{ package.short }EyeSlash}}}}
+\label{\\VAR{ package.short }ThumbsUp}
+\end{equation}
 \section{Icons}
 \begin{multicols}{2}
 \begin{itemize}
 \BLOCK{ for icon in icons }
-  \item \\VAR{ package.short }\VAR{ icon.label } \hspace{1em} \VAR{ package.short }\VAR{ icon.label }
+  \item \\VAR{ package.short }\VAR{ icon.prepend }\VAR{ icon.label }\VAR{ icon.append } \hspace{1em} \VAR{ package.short }\VAR{ icon.prepend }\VAR{ icon.label }\VAR{ icon.append }
 \BLOCK{ endfor }
 \end{itemize}
 \end{multicols}

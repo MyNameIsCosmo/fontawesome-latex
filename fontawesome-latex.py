@@ -1,7 +1,13 @@
+#!/usr/bin/env python3
 '''
-Fontawesome Latex Generator
+Fontawesome LaTeX Mapping Generator
+
+This file will download, extract, analyze a FontAwesome archive,
+and then build LaTeX mappings to use FontAwesome icons in your TeX document.
+
+Check out https://github.com/mynameiscosmo/fontawesome-latex for more info.
 '''
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __author__ = 'Cosmo Borsky'
 __license__ = 'MIT License'
 __copyright__ = 'Copyright (c) 2018 Cosmo Borsky'
@@ -23,7 +29,7 @@ from tqdm import tqdm
 
 logging_config = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_logs': False,
     'formatters': {
         'simple': {
             'format': '[%(levelname)s] %(message)s'
@@ -49,7 +55,7 @@ tqdm_kb = {
 }
 
 dictConfig(logging_config)
-logger = logging.getLogger()
+log = logging.getLogger()
 
 jinja_args = { # noqa: W605
     'block_start_string': '\BLOCK{',
@@ -116,49 +122,70 @@ replace = [
 ]
 
 
-packages = {
-    'regular': {
-        'name': 'fontawesomefree',
-        'desc': '{date} {version} Font Awesome 5 Free Regular',
-        'font': 'Font Awesome 5 Free-Regular-400',
-        'class': 'fontawesome-free',
-        'short': 'fa',
-        'cmd': 'faicon',
-        'file': 'fontawesomefree'
-    },
-    'solid': {
-        'name': 'fontawesomefreesolid',
-        'desc': '{date} {version} Font Awesome 5 Free Solid',
-        'font': 'Font Awesome 5 Free-Solid-900',
-        'class': 'fontawesome-free-solid',
-        'short': 'fas',
-        'cmd': 'fasicon',
-        'file': 'fontawesomefreesolid'
+package = {
+    'desc': '{date} {version} Font Awesome 5 {fa_type}',
+    'short': 'fa',
+    'cmd': 'faicon',
+    'file': 'fontawesome',
+    'free': {
+        'font': 'Font Awesome 5 Free',
+        'regular': {
+            'font': '-Regular-400',
+            'prepend': '',
+            'append': ''
+        },
+        'solid': {
+            'font': '-Solid-900',
+            'prepend': '',
+            'append': 'Solid'
+        }
     },
     'brands': {
-        'name': 'fontawesomebrandsregular',
-        'desc': '{date} {version} Font Awesome 5 Brands Regular',
         'font': 'Font Awesome 5 Brands-Regular-400',
-        'class': 'fontawesome-brands-regular',
-        'short': 'fab',
-        'cmd': 'fabicon',
-        'file': 'fontawesomebrandsregular'
+        'prepend': 'b',
+        'append': ''
+    },
+    'pro': {
+        'font': 'Font Awesome 5 Pro',
+        'regular': {
+            'font': '-Regular-400',
+            'prepend': '',
+            'append': ''
+        },
+        'solid': {
+            'font': '-Solid-900',
+            'prepend': '',
+            'append': 'Solid'
+        },
+        'light': {
+            'font': '-Light-300',
+            'prepend': '',
+            'append': 'Light'
+        }
     }
 }
-
-styles = [name for name in packages]
 
 
 class ReleaseException(Exception):
     pass
 
 
-def choice(text, default='N'):
+def choice(text, default='N', append=' [{}/{}]'):
     ''' Request a y/N answer from the user. '''
+    append = append.format(
+        *(('Y', 'n') if strtobool(default) else ('y', 'N'))
+    )
     try:
-        return strtobool(input(text))
+        return strtobool(input(text + append))
     except ValueError:
         return strtobool(default)
+
+
+def promptError(text, default='N'):
+    ''' Prompt the user and exit on no or exception '''
+    if not choice(text, default):
+        log.error('Aborting!')
+        sys.exit(1)
 
 
 def getReleaseInfo(version=None):
@@ -174,7 +201,7 @@ def getReleaseInfo(version=None):
 
     url = apiURL + release
 
-    logger.debug('Looking for a release in ' + url)
+    log.debug('Looking for a release in ' + url)
 
     response = requests.get(url)
     response.raise_for_status()
@@ -192,8 +219,8 @@ def checkReleaseInfo(info):
         raise ReleaseException('Could not determine release download')
     if (len(info['assets']) < 1 or
             'browser_download_url' not in info['assets'][0]):
-        logger.warn('Cannot determine browser download url from assets. '
-                    'Checking zipball_url.')
+        log.warn('Cannot determine browser download url from assets. '
+                 'Checking zipball_url.')
         if 'zipball_url' in info and info['zipball_url'].endswith('.zip'):
             return info['zipball_url']
         raise ReleaseException('Could not find a suitable zip '
@@ -212,13 +239,13 @@ def getAndCheckRelease(version=None):
         info = getReleaseInfo(version)
         url = checkReleaseInfo(info)
     except (ReleaseException, requests.exceptions.HTTPError) as e:
-        logger.debug(e)
+        log.debug(e)
         if getattr(e, 'response'):
-            logger.debug('Release exception: ' + e.response)
+            log.debug('Release exception: ' + e.response)
 
         raise
 
-    logger.debug('Found a release! ' + url)
+    log.debug('Found a release! ' + url)
 
     return url
 
@@ -230,7 +257,7 @@ def downloadFile(url, filename=None, output_dir=''):
         filename = url.split('/')[-1]
     filename = os.path.join(output_dir, filename)
 
-    logger.debug('Downloading {} as {}'.format(
+    log.debug('Downloading {} as {}'.format(
         url,
         filename
     ))
@@ -256,6 +283,24 @@ def downloadFile(url, filename=None, output_dir=''):
     response.raise_for_status()
 
     return filename
+
+
+def handleZipArchive(response, zipped_dir, download_dir):
+    ''' Handle extracting an archive and getting a directory listing '''
+    dirs = []
+    if zipped_dir is None:
+        log.debug('No zipped dir specified. Unzipping {}'.format(response))
+        files = unzip(response, download_dir)
+        dirs = [f.filename for f in files if f.file_size == 0]
+    else:
+        log.debug('Zipped dir specified! Unzipping {}'.format(response))
+        dirs = [
+            d[0].replace(download_dir + '/', '', 1)
+            for d in os.walk(download_dir)
+            if d[0] != download_dir
+        ]
+
+    return dirs
 
 
 def unzip(filename, target=''):
@@ -285,19 +330,30 @@ def copyFonts(font_dir, output_dir):
     if len(fonts) < 1:
         raise Exception('No fonts found in ' + os.path.abspath(font_dir))
 
+    log.debug('Found {} fonts in {}'.format(len(fonts), font_dir))
+
     os.makedirs(output_dir, exist_ok=True)
 
     for font in fonts:
         font = os.path.join(font_dir, font)
-        logger.debug('Copying Font {} to {}'.format(
+        log.debug('Copying Font {} to {}'.format(
             font,
             output_dir
         ))
         path = shutil.copy(font, output_dir)
-        logger.debug('Copied {} to {}'.format(
+        log.debug('Copied {} to {}'.format(
             font,
             path
         ))
+
+    return fonts
+
+
+def fontVersion(fonts):
+    ''' Take in a list of fonts and check for 'pro' or 'free' '''
+    pro = [f for f in fonts if 'Pro' in f]
+
+    return 'pro' if len(pro) > 0 else 'free'
 
 
 def loadMetadata(metadata_dirs, metadata_file):
@@ -322,21 +378,21 @@ def loadMetadata(metadata_dirs, metadata_file):
 
 def getVersion(readme):
     ''' Pull the Font Awesome version from the readme '''
-    logger.debug('Looking for version in: ' + readme)
+    log.debug('Looking for version in: ' + readme)
 
     version = None
     with open(readme, 'r') as f:
         for line in f:
-            logger.debug('Searching: ' + line)
+            log.debug('Searching: ' + line)
             version = re.search(
                 r'([0-9]{1,2}).([0-9]{1,2}).([0-9]{2,3})',
                 line
             ).group()
             if 'Font Awesome' in line and version is not None:
-                logger.debug('Version: ' + version)
+                log.debug('Version: ' + version)
                 break
         else:
-            logger.warn('Could not find a version!')
+            log.warn('Could not find a version!')
 
     return version
 
@@ -353,7 +409,7 @@ def formatLabel(text):
         for item in group.items():
             if item[0] in text:
                 text = text.replace(item[0], item[1])
-                logger.debug('Replaced {} to {} in {}'.format(
+                log.debug('Replaced {} to {} in {}'.format(
                     item[0],
                     item[1],
                     text
@@ -366,31 +422,46 @@ def formatLabel(text):
     return ''.join(words)
 
 
-def genIcons(data, style):
+def genIcons(data, package, fa_type):
     ''' Take in a metadata dictionary of icons.
     Returns a dictionary of icons with minimal information. '''
     icons = []
     for item in sorted(data.items()):
-        if style in item[1]['styles']:
-            logger.debug('Processing {} labeled {}'.format(
+        for style in item[1]['styles']:
+            if style == 'brands':
+                pkg = package['brands']
+            elif style in package[fa_type]:
+                pkg = package[fa_type][style]
+            else:
+                continue
+            log.debug('Processing {} labeled {}'.format(
                 item[0],
                 item[1]['label']
             ))
             name = item[0]
             if name in problematic_icons:
-                logger.debug(
+                log.debug(
                     'Caught problematic icon {}, renamed to {}'.format(
                         item[0],
                         name
                     )
                 )
                 name = problematic_icons[item[0]]
+            modifier = ''
+            if style == 'solid':
+                modifier = '\\textbf'
+            elif style == 'light':
+                modifier = '\\textit'
             icon = {}
             icon['name'] = name
             icon['label'] = formatLabel(item[1]['label'])
+            icon['type'] = fa_type
             icon['unicode'] = item[1]['unicode'].upper()
+            icon['prepend'] = pkg['prepend']
+            icon['append'] = pkg['append']
+            icon['modifier'] = modifier
             icons.append(icon)
-            logger.debug('Processed ' + icon['label'])
+            log.debug('Processed {} for style {}'.format(icon['label'], style))
 
     return icons
 
@@ -398,7 +469,7 @@ def genIcons(data, style):
 def genTemplate(template, **kwargs):
     ''' Generate a jinja2 template and pass **args to it.
     Returns the rendered template. '''
-    logger.debug('Generating template: ' + template)
+    log.debug('Generating template: ' + template)
     template = jinja_env.get_template(template)
 
     return template.render(**kwargs)
@@ -419,7 +490,7 @@ def saveFile(data, filename, output_dir='', overwrite=False):
     elif type(data) is not str:
         raise TypeError('Data input is not a string or byte array!')
 
-    logger.debug('Opening {} in {} for writing'.format(
+    log.debug('Opening {} in {} for writing'.format(
         filename,
         mode
     ))
@@ -442,24 +513,22 @@ def saveFile(data, filename, output_dir='', overwrite=False):
               help='Use a local zipped file')
 @click.option('--zipped-dir', default=None,
               help='Use a local unzipped dir')
-@click.option('--style', type=click.Choice(['all'] + styles),
-              default='all', help='Font Awesome font style')
 @click.option('--debug', is_flag=True,
               help='Enable debug output')
 @click.option('--yes', is_flag=True,
               help='Yes for all prompts')
 def main(version, download_dir, output_dir, fonts_dir,
-         local_file, style, zipped_dir, debug, yes):
+         local_file, zipped_dir, debug, yes):
     ''' Process CLI arguments accordingly.
     Download, unzip, load metadata, and create the templates. '''
 
     # Enable debugging
 
     if debug:
-        logger.root.setLevel(logging.DEBUG)
+        log.root.setLevel(logging.DEBUG)
         args = locals()
         for key in args:
-            logger.debug('{}: {}'.format(key, args[key]))
+            log.debug('{}: {}'.format(key, args[key]))
 
     # Some variables that may change in the future
 
@@ -472,31 +541,21 @@ def main(version, download_dir, output_dir, fonts_dir,
     response = local_file
 
     if response is None and zipped_dir is None:
-        logger.debug('No local zip or zipped dir specified. Downloading...')
+        log.debug('No local zip or zipped dir specified. Downloading...')
         try:
             release = getAndCheckRelease(version)
         except ReleaseException:
             if version is not None:
-                logger.warn('Release version %s was not found.' % version)
-                if choice('Download latest release? [y/N]') or yes:
+                log.warn('Release version %s was not found.' % version)
+                if choice('Download latest release?') or yes:
                     release = getAndCheckRelease()
         response = downloadFile(release, output_dir=download_dir)
 
     # Handle zip archive
 
-    if zipped_dir is None:
-        logger.debug('No zipped dir specified. Unzipping {}'.format(response))
-        files = unzip(response, download_dir)
-        dirs = [f.filename for f in files if f.file_size == 0]
-    else:
-        logger.debug('Zipped dir specified! Unzipping {}'.format(response))
-        dirs = [
-            d[0].replace(download_dir + '/', '', 1)
-            for d in os.walk(download_dir)
-            if d[0] != download_dir
-        ]
+    dirs = handleZipArchive(response, zipped_dir, download_dir)
 
-    logger.debug('Found the following dirs: {}'.format(dirs))
+    log.debug('Found the following dirs: {}'.format(dirs))
 
     zip_dir = dirs[0].split('/')[0]
 
@@ -507,34 +566,39 @@ def main(version, download_dir, output_dir, fonts_dir,
     font_dirs = [
         os.path.join(download_dir, d) for d in dirs if font_dir in d
     ]
-    logger.debug('font_dirs: '.format(font_dirs))
+    log.debug('font_dirs: '.format(font_dirs))
 
+    fonts = []
     if len(font_dirs) == 1:
-        copyFonts(font_dirs[0], fonts_out_dir)
+        fonts = copyFonts(font_dirs[0], fonts_out_dir)
     else:
-        logger.error(
+        log.error(
             'Cannot find the fonts dir in the Font Awesome zip! '
-            'Typically it is tmp/fontawesome-free-x.x.xx/use-on-desktop.'
+            'Typically it is tmp/fontawesome-free-x.x.xx/use-on-desktop. '
         )
-        if not choice('Continue without fonts? [y/N]', yes):
-            logger.error('Aborting!')
-            sys.exit(1)
+        promptError('Continue without fonts?', yes)
+
+    if len(fonts) == 0:
+        log.error(
+            'Did not find any fonts in {}'.format(fonts_out_dir) +
+            ' If you continue, you will have to manually install fonts'
+            ' from fontawesome.zip/use-on-desktop to the fonts directory.'
+        )
+        promptError('Continue without fonts?', yes)
+
+    fa_type = fontVersion(fonts)
+    log.debug('Building for Font Awesome ' + fa_type)
 
     # Load Metadata
 
     metadata_dirs = [
         os.path.join(download_dir, d) for d in dirs if metadata_dir in d
     ]
-    logger.debug('metadata_dirs: {}'.format(metadata_dirs))
+    log.debug('metadata_dirs: {}'.format(metadata_dirs))
 
     data = loadMetadata(metadata_dirs, metadata_file)
 
     # Process Font Styles
-
-    if style == 'all':
-        queue = [(s, packages[s]) for s in styles]
-    else:
-        queue = [(style, packages[style])]
 
     d = date.today().strftime('%Y/%m/%d')
     readme_path = os.path.join(download_dir, zip_dir, 'README.md')
@@ -542,36 +606,43 @@ def main(version, download_dir, output_dir, fonts_dir,
 
     fonts_dir = fonts_dir + '/' if fonts_dir[-1] != '/' else fonts_dir
 
-    for name, package in queue:
-        package['desc'] = package['desc'].format(date=d, version=fa_version)
-        icons = genIcons(data, name)
-        templates = {
-            'sty': genTemplate(
-                'fontawesome.sty',
-                icons=icons,
-                package=package,
-                fonts_dir=fonts_dir
-            ),
-            'tex': genTemplate(
-                'fontawesome.tex',
-                icons=icons,
-                package=package,
-                fonts_dir=fonts_dir
-            )
-        }
-        for extension, template in templates.items():
-            output_file = '{}.{}'.format(package['name'], extension)
-            logger.debug('Building '.format(output_file))
-            try:
-                saveFile(template, output_file, output_dir, yes)
-            except FileExistsError:
-                output = os.path.join(output_dir, output_file)
-                if choice('{} exists! Overwrite? [y/N]'.format(output)):
-                    saveFile(template, output_file, output_dir, True)
-                else:
-                    logger.info('Skipping ' + output)
+    package['desc'] = package['desc'].format(
+        date=d,
+        version=fa_version,
+        fa_type=fa_type.upper()
+    )
 
-    logger.info('Templates built! Check {}'.format(
+    icons = genIcons(data, package, fa_type)
+
+    templates = {
+        'sty': genTemplate(
+            'fontawesome.sty',
+            icons=icons,
+            package=package,
+            fonts_dir=fonts_dir,
+            fa_type=fa_type
+        ),
+        'tex': genTemplate(
+            'fontawesome.tex',
+            icons=icons,
+            package=package,
+            fonts_dir=fonts_dir,
+            fa_type=fa_type
+        )
+    }
+    for extension, template in templates.items():
+        output_file = '{}.{}'.format(package['file'], extension)
+        log.debug('Building '.format(output_file))
+        try:
+            saveFile(template, output_file, output_dir, yes)
+        except FileExistsError:
+            output = os.path.join(output_dir, output_file)
+            if choice('{} exists! Overwrite?'.format(output)):
+                saveFile(template, output_file, output_dir, True)
+            else:
+                log.info('Skipping ' + output)
+
+    log.info('Templates built! Check {}'.format(
         os.path.abspath(output_dir)
     ))
 
